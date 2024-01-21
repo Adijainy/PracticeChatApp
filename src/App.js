@@ -1,21 +1,36 @@
 import "./App.css";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { io } from "socket.io-client";
 
 function App() {
   const [msg, setmsgs] = useState([]);
   const [newMsg, setnewMsg] = useState("");
   const [newRoom, setnewRoom] = useState("");
-  const socket = io("http://localhost:5000");
+  const [roomName, setroomName] = useState("");
+  
+  const socket = useMemo(()=>
+    io('http://localhost:4000')
+  ,[])
+
+  socket.on("receive-msg", (message) => {
+    // console.log(message);
+    setmsgs([...msg, message]);
+  });
+
 
   useEffect(() => {
     socket.on("connect", () => {
       console.log(socket.id);
     });
+
+    
+    
     return () => {
       socket.disconnect();
     };
   }, []);
+
+  console.log(msg);
   return (
     <div className="main">
       <h1>Chat App</h1>
@@ -34,14 +49,15 @@ function App() {
         />
         <button
           onClick={() => {
-            setmsgs([...msg, newMsg]);
-            socket.emit("msg", newMsg);
+            setmsgs([...msg, `You: ${newMsg}`]);
+            socket.emit("msg", {newMsg, roomName});
             setnewMsg("");
           }}
         >
           Add
         </button>
       </div>
+      
       <div>
         <input
           type="text"
@@ -50,10 +66,12 @@ function App() {
         />
         <button
           onClick={() => {
+            socket.emit('join-room', newRoom);
+            setroomName(newRoom);
             setnewRoom("");
           }}
         >
-          Room Code
+          Join Room
         </button>
       </div>
     </div>
