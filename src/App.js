@@ -1,23 +1,61 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import { useEffect, useState } from "react";
+import { io } from "socket.io-client";
 
 function App() {
+  const [msg, setmsgs] = useState([]);
+  const [newMsg, setnewMsg] = useState("");
+  const [newRoom, setnewRoom] = useState("");
+  const socket = io("http://localhost:5000");
+
+  useEffect(() => {
+    socket.on("connect", () => {
+      console.log(socket.id);
+    });
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
+    <div className="main">
+      <h1>Chat App</h1>
+      <div>
+        <ul>
+          {msg.map((items, idx) => (
+            <li key={idx}>{items}</li>
+          ))}
+        </ul>
+      </div>
+      <div>
+        <input
+          type="text"
+          onChange={(e) => setnewMsg(e.target.value)}
+          value={newMsg}
+        />
+        <button
+          onClick={() => {
+            setmsgs([...msg, newMsg]);
+            socket.emit("msg", newMsg);
+            setnewMsg("");
+          }}
         >
-          Learn React
-        </a>
-      </header>
+          Add
+        </button>
+      </div>
+      <div>
+        <input
+          type="text"
+          onChange={(e) => setnewRoom(e.target.value)}
+          value={newRoom}
+        />
+        <button
+          onClick={() => {
+            setnewRoom("");
+          }}
+        >
+          Room Code
+        </button>
+      </div>
     </div>
   );
 }
